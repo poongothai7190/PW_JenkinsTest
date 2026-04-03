@@ -6,7 +6,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 1, //process.env.CI ? 2 : 0,
   workers: 1, // process.env.CI ? 1 : undefined,
-  reporter: [["list"], ["allure-playwright"]],
+  reporter: [
+    ["list"],
+    ["allure-playwright", { outputFolder: "allure-results" }],
+  ],
   use: {
     trace: "on-first-retry",
     headless: false,
