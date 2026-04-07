@@ -26,8 +26,11 @@ pipeline {
 
          stage('Clean Old Reports') {
             steps {
-                bat "rmdir /s /q allure-results"
-                bat "rmdir /s /q allure-report"
+                // Delete allure-results if it exists
+                bat """
+                    if exist allure-results rmdir /s /q allure-results
+                    if exist allure-report rmdir /s /q allure-report
+                """
             }
         }
 
