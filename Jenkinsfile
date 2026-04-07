@@ -27,14 +27,23 @@ pipeline {
          stage('Clean Old Reports') {
             steps {
                 bat "rm -rf ${env.ALLURE_RESULTS} ${env.ALLURE_REPORT}"
+                bat "rmdir /s /q allure-results"
+                bat "rmdir /s /q allure-report"
             }
         }
 
         stage('Run Playwright Tests') {
             steps {
-                bat 'npx playwright test --reporter=json'
+                // Use allure-playwright reporter
+                bat 'npx playwright test --reporter=allure-playwright,json'
             }
         }
+
+        // stage('Run Playwright Tests') {
+        //     steps {
+        //         bat 'npx playwright test --reporter=json'
+        //     }
+        // }
 
         // stage('Extract Test Counts') {
         //     steps {
@@ -61,15 +70,15 @@ pipeline {
         //     }
         // }
 
-        stage('Generate Allure Report') {
+         stage('Generate Allure Report') {
             steps {
-                bat "npx allure generate ${env.REPORT_DIR} --clean -o ${env.ALLURE_DIR}"
+                bat "npx allure generate ${env.ALLURE_RESULTS} --clean -o ${env.ALLURE_REPORT}"
+                archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
+                // Display in Jenkins UI via Allure plugin
                 allure([
-                        includeProperties: false,
-                        jdk: '', 
-                        results: [[path: "${env.REPORT_DIR}"]],
-                        reportBuildPolicy: 'ALWAYS'
-                        ])
+                    reportBuildPolicy: 'ALWAYS',
+                    results: [[path: "${env.ALLURE_RESULTS}"]]
+                ])
             }
         }
 
