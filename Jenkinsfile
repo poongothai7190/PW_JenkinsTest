@@ -54,6 +54,12 @@ pipeline {
         stage('Generate Allure Report') {
             steps {
                 bat "npx allure generate ${env.REPORT_DIR} --clean -o ${env.ALLURE_DIR}"
+                allure([
+                        includeProperties: false,
+                        jdk: '', 
+                        results: [[path: "${env.REPORT_DIR}"]],
+                        reportBuildPolicy: 'ALWAYS'
+                    ])
             }
         }
 
