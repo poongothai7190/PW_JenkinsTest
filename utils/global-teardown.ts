@@ -11,8 +11,10 @@ async function globalTeardown() {
     process.stdout.write("Playwright report not found!\n");
     return;
   }
-  const rawData = fs.readFileSync(filePath, "utf-8");
-  const reportData = JSON.parse(rawData);
+  const rawData = fs.readFileSync(filePath, "utf-8"); //Reads file content as a string.
+  const reportData = JSON.parse(rawData); //Converts JSON string → JavaScript object.
+
+  //template literal to create a summary string with test statistics from the report data. It calculates total tests, passed, failed, skipped, and flaky tests using the stats object from the report data.
   const summary = `
 Total   : ${reportData.stats.expected + reportData.stats.unexpected + reportData.stats.skipped + (reportData.stats.flaky || 0)}
 Passed  : ${reportData.stats.expected}
@@ -21,7 +23,7 @@ Skipped : ${reportData.stats.skipped}
 Flaky   : ${reportData.stats.flaky || 0}
 `;
 
-  fs.writeFileSync(path.join(process.cwd(), "summary.txt"), summary);
+  fs.writeFileSync(path.join(process.cwd(), "summary.txt"), summary); //creates summary.txt and write into it.
   console.log(summary);
 }
 
