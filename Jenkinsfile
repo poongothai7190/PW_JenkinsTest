@@ -77,15 +77,15 @@ pipeline {
 //         }
     }
 
-    // post {
-    //     always {
-    //         archiveArtifacts artifacts: "${env.ALLURE_DIR}/**", allowEmptyArchive: true
-    //         archiveArtifacts artifacts: 'playwright-report.json', allowEmptyArchive: true
-    //     }
-    //     failure {
-    //         mail to: 'team@company.com',
-    //              subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
-    //              body: "Check Jenkins build ${env.BUILD_URL} for details."
-    //     }
-    // }
+    post {
+        always {
+            archiveArtifacts artifacts: "${env.ALLURE_DIR}/**", allowEmptyArchive: true
+            // archiveArtifacts artifacts: 'playwright-report.json', allowEmptyArchive: true
+        }
+        // failure {
+        //     mail to: 'team@company.com',
+        //          subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
+        //          body: "Check Jenkins build ${env.BUILD_URL} for details."
+        // }
+    }
 }
