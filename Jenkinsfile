@@ -2,9 +2,13 @@ pipeline {
     agent any
 
     environment {
+        // NODE_ENV = 'test'
+        // REPORT_DIR = 'playwright-report'
+        // ALLURE_DIR = 'allure-report'
         NODE_ENV = 'test'
-        REPORT_DIR = 'playwright-report'
-        ALLURE_DIR = 'allure-report'
+        PLAYWRIGHT_REPORT = 'playwright-report.json'
+        ALLURE_RESULTS = 'allure-results'
+        ALLURE_REPORT = 'allure-report'
     }
 
     stages {
@@ -17,6 +21,12 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 bat 'npm install'
+            }
+        }
+
+         stage('Clean Old Reports') {
+            steps {
+                bat "rm -rf ${env.ALLURE_RESULTS} ${env.ALLURE_REPORT}"
             }
         }
 
@@ -59,7 +69,7 @@ pipeline {
                         jdk: '', 
                         results: [[path: "${env.REPORT_DIR}"]],
                         reportBuildPolicy: 'ALWAYS'
-                    ])
+                        ])
             }
         }
 
