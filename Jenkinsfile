@@ -16,13 +16,13 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                bat 'npm install'
             }
         }
 
         stage('Run Playwright Tests') {
             steps {
-                sh 'npx playwright test --reporter=json'
+                bat 'npx playwright test --reporter=json'
             }
         }
 
@@ -53,7 +53,7 @@ pipeline {
 
         stage('Generate Allure Report') {
             steps {
-                sh "npx allure generate ${env.REPORT_DIR} --clean -o ${env.ALLURE_DIR}"
+                bat "npx allure generate ${env.REPORT_DIR} --clean -o ${env.ALLURE_DIR}"
             }
         }
 
