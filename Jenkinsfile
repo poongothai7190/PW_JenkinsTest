@@ -26,7 +26,6 @@ pipeline {
 
          stage('Clean Old Reports') {
             steps {
-                bat "rm -rf ${env.ALLURE_RESULTS} ${env.ALLURE_REPORT}"
                 bat "rmdir /s /q allure-results"
                 bat "rmdir /s /q allure-report"
             }
