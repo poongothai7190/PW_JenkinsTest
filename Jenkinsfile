@@ -120,34 +120,6 @@ pipeline {
 //         }
     }
 
-    // stage('Send Email') {
-    // steps {
-    //     mail bcc: '',
-    //          body: """Playwright test execution finished.
-
-    //         ${env.TEST_SUMMARY}
-
-    //         Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-    //     """,
-    //              cc: 'testautomationmail2025@gmail.com',
-    //              from: 'poongothai.ece@gmail.com',
-    //              replyTo: 'testautomationmail2025@gmail.com',
-    //              subject: "Playwright Test Report - Build #${env.BUILD_NUMBER}",
-    //              to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com'
-    //     }
-    }
-
-    // post {
-    //     always {
-    //         archiveArtifacts artifacts: "${env.ALLURE_DIR}/**", allowEmptyArchive: true
-    //         // archiveArtifacts artifacts: 'playwright-report.json', allowEmptyArchive: true
-    //     }
-    //     // failure {
-    //     //     mail to: 'team@company.com',
-    //     //          subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
-    //     //          body: "Check Jenkins build ${env.BUILD_URL} for details."
-    //     // }
-    // }
 
     post {
     always {
@@ -155,10 +127,10 @@ pipeline {
         archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
         // Archive Playwright JSON report
         archiveArtifacts artifacts: "${env.PLAYWRIGHT_REPORT}", allowEmptyArchive: true
-    }
+        }
 
-    success {
-         script {
+        success {
+            script {
                 def summary = fileExists("${env.WORKSPACE}/summary.txt") ? readFile("${env.WORKSPACE}/summary.txt").trim() : "Summary not available"
                 emailext(
                     to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
@@ -173,11 +145,11 @@ pipeline {
                     attachmentsPattern: "${env.ALLURE_REPORT}/**"
                 )
             }
-    }
+        }
 
-    failure {
+        failure {
         // emailext is more powerful than mail and allows attachments and better formatting- for attaching allure report
-       script {
+            script {
                 //def -> declares a variable in groovy sccript
                 def summary = fileExists("${env.WORKSPACE}/summary.txt") ? readFile("${env.WORKSPACE}/summary.txt").trim() : "Summary not available"
                 //emailext --> email extension plugin must be installed in Jenkins and configured with SMTP server to work
@@ -190,9 +162,10 @@ pipeline {
                 ${summary}
 
                 Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-            """,
+                """,
                     attachmentsPattern: "${env.ALLURE_REPORT}/**"
                 )
             }
+        }
     }
 }
