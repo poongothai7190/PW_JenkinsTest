@@ -6,7 +6,11 @@ async function globalTeardown() {
   // tiny wait to ensure file is fully written
   await new Promise((res) => setTimeout(res, 500));
 
-  const filePath = path.join(process.cwd(), "playwright-report.json");
+  // const filePath = path.join(process.cwd(), "playwright-report.json");
+  const filePath = path.join(
+    process.env["PWD"] || process.cwd(),
+    "playwright-report.json",
+  );
   if (!fs.existsSync(filePath)) {
     process.stdout.write("Playwright report not found!\n");
     return;
