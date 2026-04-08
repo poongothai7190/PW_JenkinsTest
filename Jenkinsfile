@@ -35,8 +35,10 @@ pipeline {
         steps {
             script {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                bat 'npx playwright test --reporter=allure-playwright,json'
+                bat 'npx playwright test --reporter=allure-playwright --reporter=json=playwright-report.json'
                 }
+                 // DEBUG HERE
+                 bat 'dir'
             }
         }
     }
@@ -66,18 +68,18 @@ pipeline {
         //     }
         // }
 
-        stage('Read Test Summary') {
-            steps {
-                script {
-                    def summaryFile = "${env.WORKSPACE}/summary.txt"
-                    if (!fileExists(summaryFile)) {
-                        error "summary.txt not found! Make sure globalTeardown ran."
-                    }
-                    env.TEST_SUMMARY = readFile(summaryFile).trim()
-                    echo "Test Summary:\n${env.TEST_SUMMARY}"
-                }
-            }
-        }
+        // stage('Read Test Summary') {
+        //     steps {
+        //         script {
+        //             def summaryFile = "${env.WORKSPACE}/summary.txt"
+        //             if (!fileExists(summaryFile)) {
+        //                 error "summary.txt not found! Make sure globalTeardown ran."
+        //             }
+        //             env.TEST_SUMMARY = readFile(summaryFile).trim()
+        //             echo "Test Summary:\n${env.TEST_SUMMARY}"
+        //         }
+        //     }
+        // }
 
          stage('Generate Allure Report') {
             steps {
