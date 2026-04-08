@@ -75,18 +75,18 @@ pipeline {
         //     }
         // }
 
-        // stage('Read Test Summary') {
-        //     steps {
-        //         script {
-        //             def summaryFile = "${env.WORKSPACE}/summary.txt"
-        //             if (!fileExists(summaryFile)) {
-        //                 error "summary.txt not found! Make sure globalTeardown ran."
-        //             }
-        //             env.TEST_SUMMARY = readFile(summaryFile).trim()
-        //             echo "Test Summary:\n${env.TEST_SUMMARY}"
-        //         }
-        //     }
-        // }
+        stage('Read Test Summary') {
+            steps {
+                script {
+                    def summaryFile = "${env.WORKSPACE}/summary.txt"
+                    if (!fileExists(summaryFile)) {
+                        error "summary.txt not found! Make sure globalTeardown ran."
+                    }
+                    env.TEST_SUMMARY = readFile(summaryFile).trim()
+                    echo "Test Summary:\n${env.TEST_SUMMARY}"
+                }
+            }
+        }
 
          stage('Generate Allure Report') {
             steps {
@@ -120,22 +120,22 @@ pipeline {
 //         }
     }
 
-//     stage('Send Email') {
-//     steps {
-//         mail bcc: '',
-//              body: """Playwright test execution finished.
+    // stage('Send Email') {
+    // steps {
+    //     mail bcc: '',
+    //          body: """Playwright test execution finished.
 
-// ${env.TEST_SUMMARY}
+    //         ${env.TEST_SUMMARY}
 
-// Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-// """,
-//              cc: 'testautomationmail2025@gmail.com',
-//              from: 'poongothai.ece@gmail.com',
-//              replyTo: 'testautomationmail2025@gmail.com',
-//              subject: "Playwright Test Report - Build #${env.BUILD_NUMBER}",
-//              to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com'
-//     }
-// }
+    //         Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+    //     """,
+    //              cc: 'testautomationmail2025@gmail.com',
+    //              from: 'poongothai.ece@gmail.com',
+    //              replyTo: 'testautomationmail2025@gmail.com',
+    //              subject: "Playwright Test Report - Build #${env.BUILD_NUMBER}",
+    //              to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com'
+    //     }
+    }
 
     // post {
     //     always {
@@ -157,24 +157,42 @@ pipeline {
         archiveArtifacts artifacts: "${env.PLAYWRIGHT_REPORT}", allowEmptyArchive: true
     }
 
-    // success {
-    //     echo "Build succeeded! Allure report generated."
-    // }
+    success {
+         script {
+                def summary = fileExists("${env.WORKSPACE}/summary.txt") ? readFile("${env.WORKSPACE}/summary.txt").trim() : "Summary not available"
+                emailext(
+                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
+                    cc: 'poongothai.ece@gmail.com',
+                    subject: "Playwright Tests Passed - Build #${env.BUILD_NUMBER}",
+                    body: """Playwright test execution passed.
 
-    // failure {
-    //     // Optional: send email on failure
-    //     mail bcc: '',
-    //          cc: 'manager1@company.com,manager2@company.com',
-    //          from: 'poongothai.ece@gmail.com',
-    //          replyTo: 'testautomationmail2025@gmail.com',
-    //          subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
-    //          body: """Playwright test execution failed.
+                    ${summary}
 
-    //         Check Jenkins build: ${env.BUILD_URL}
+                    Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+                    """,
+                    attachmentsPattern: "${env.ALLURE_REPORT}/**"
+                )
+            }
+    }
 
-    //         Check Allure report (if any): ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-    //         """,
-    //          to: 'team1@company.com,team2@company.com'
-    //     }
+    failure {
+        // emailext is more powerful than mail and allows attachments and better formatting- for attaching allure report
+       script {
+                //def -> declares a variable in groovy sccript
+                def summary = fileExists("${env.WORKSPACE}/summary.txt") ? readFile("${env.WORKSPACE}/summary.txt").trim() : "Summary not available"
+                //emailext --> email extension plugin must be installed in Jenkins and configured with SMTP server to work
+                emailext(
+                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
+                    cc: 'poongothai.ece@gmail.com',
+                    subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
+                    body: """Playwright test execution failed.
+
+                ${summary}
+
+                Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+            """,
+                    attachmentsPattern: "${env.ALLURE_REPORT}/**"
+                )
+            }
     }
 }
