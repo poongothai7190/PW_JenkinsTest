@@ -21,6 +21,12 @@ pipeline {
             }
         }
 
+        stage('Install Playwright Browsers') {
+        steps {
+            bat 'npx playwright install'
+        }
+    }
+
          stage('Clean Old Reports') {
             steps {
                 // Delete allure-results if it exists
@@ -35,7 +41,8 @@ pipeline {
         steps {
             script {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                bat 'npx playwright test --reporter=allure-playwright --reporter=json=playwright-report.json'
+                // bat 'npx playwright test --reporter=allure-playwright --reporter=json=playwright-report.json'
+                bat 'npx playwright test'
                 }
                  // DEBUG HERE
                  bat 'dir'
