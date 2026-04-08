@@ -19,12 +19,29 @@ async function globalTeardown() {
   const reportData = JSON.parse(rawData); //Converts JSON string → JavaScript object.
 
   //template literal to create a summary string with test statistics from the report data. It calculates total tests, passed, failed, skipped, and flaky tests using the stats object from the report data.
+  //   const summary = `
+  // Total   : ${reportData.stats.expected + reportData.stats.unexpected + reportData.stats.skipped + (reportData.stats.flaky || 0)}
+  // Passed  : ${reportData.stats.expected}
+  // Failed  : ${reportData.stats.unexpected}
+  // Skipped : ${reportData.stats.skipped}
+  // Flaky   : ${reportData.stats.flaky || 0}
+  // `;
+  // Use stats directly to match Allure
+  const total =
+    reportData.stats.total || reportData.suites.flatMap((s) => s.specs).length;
+  const passed = reportData.stats.expected || 0;
+  const failed = reportData.stats.unexpected || 0;
+  const skipped = reportData.stats.skipped || 0;
+  const flaky = reportData.stats.flaky || 0;
+
   const summary = `
-Total   : ${reportData.stats.expected + reportData.stats.unexpected + reportData.stats.skipped + (reportData.stats.flaky || 0)}
-Passed  : ${reportData.stats.expected}
-Failed  : ${reportData.stats.unexpected}
-Skipped : ${reportData.stats.skipped}
-Flaky   : ${reportData.stats.flaky || 0}
+Playwright Test Summary
+----------------------
+Total   : ${total}
+Passed  : ${passed}
+Failed  : ${failed}
+Skipped : ${skipped}
+Flaky   : ${flaky}
 `;
 
   fs.writeFileSync(path.join(process.cwd(), "summary.txt"), summary); //creates summary.txt and write into it.
