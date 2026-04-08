@@ -50,48 +50,23 @@ pipeline {
         }
     }
 
-        // stage('Extract Test Counts') {
-        //     steps {
-        //         script {
-        //             // Read the JSON report
-        //             def reportFile = "${env.WORKSPACE}/playwright-report.json"
-        //             if (!fileExists(reportFile)) {
-        //                 error "playwright-report.json not found!"
-        //             }
-
-        //             def jsonText = readFile(reportFile)
-        //             def report = readJSON text: jsonText
-
-        //             // Count passed, failed, skipped
-        //             int passed = report.suites.collect { it.tests.count { t -> t.status == 'passed' } }.sum()
-        //             int failed = report.suites.collect { it.tests.count { t -> t.status == 'failed' } }.sum()
-        //             int skipped = report.suites.collect { it.tests.count { t -> t.status == 'skipped' } }.sum()
-
-        //             // Save counts in environment variables
-        //             env.PASSED = passed.toString()
-        //             env.FAILED = failed.toString()
-        //             env.SKIPPED = skipped.toString()
-        //         }
-        //     }
-        // }
-
-        stage('Read Test Summary') {
-            steps {
-                script {
-                    def summaryFile = "${env.WORKSPACE}/summary.txt"
-                    if (!fileExists(summaryFile)) {
-                        error "summary.txt not found! Make sure globalTeardown ran."
-                    }
-                    env.TEST_SUMMARY = readFile(summaryFile).trim()
-                    echo "Test Summary:\n${env.TEST_SUMMARY}"
+     stage('Read Test Summary') {
+        steps {
+            script {
+                def summaryFile = "${env.WORKSPACE}/summary.txt"
+                if (!fileExists(summaryFile)) {
+                    error "summary.txt not found! Make sure globalTeardown ran."
                 }
+                env.TEST_SUMMARY = readFile(summaryFile).trim()
+                echo "Test Summary:\n${env.TEST_SUMMARY}"
             }
         }
+    }
 
-         stage('Generate Allure Report') {
-            steps {
-                bat "npx allure generate ${env.ALLURE_RESULTS} --clean -o ${env.ALLURE_REPORT}"
-                archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
+    stage('Generate Allure Report') {
+        steps {
+            bat "npx allure generate ${env.ALLURE_RESULTS} --clean -o ${env.ALLURE_REPORT}"
+            archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
 
             allure([
                 reportBuildPolicy: 'ALWAYS',
@@ -121,48 +96,60 @@ pipeline {
     }
 
 
-    post {
-    always {
-        // Archive Allure report
-        archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
-        // Archive Playwright JSON report
-        archiveArtifacts artifacts: "${env.PLAYWRIGHT_REPORT}", allowEmptyArchive: true
+     post {
+        always {
+            // Archive Playwright JSON and Allure report
+            archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
+            archiveArtifacts artifacts: "${env.PLAYWRIGHT_REPORT}", allowEmptyArchive: true
         }
 
+        // Send email for success or unstable builds
         success {
             script {
-                def summary = fileExists("${env.WORKSPACE}/summary.txt") ? readFile("${env.WORKSPACE}/summary.txt").trim() : "Summary not available"
                 emailext(
                     to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
                     cc: 'poongothai.ece@gmail.com',
                     subject: "Playwright Tests Passed - Build #${env.BUILD_NUMBER}",
                     body: """Playwright test execution passed.
 
-                    ${summary}
+${env.TEST_SUMMARY}
 
-                    Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-                    """,
+Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+""",
+                    attachmentsPattern: "${env.ALLURE_REPORT}/**"
+                )
+            }
+        }
+
+        unstable {
+            script {
+                emailext(
+                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
+                    cc: 'poongothai.ece@gmail.com',
+                    subject: "Playwright Tests Unstable - Build #${env.BUILD_NUMBER}",
+                    body: """Playwright test execution is UNSTABLE.
+
+${env.TEST_SUMMARY}
+
+Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+""",
                     attachmentsPattern: "${env.ALLURE_REPORT}/**"
                 )
             }
         }
 
         failure {
-        // emailext is more powerful than mail and allows attachments and better formatting- for attaching allure report
             script {
-                //def -> declares a variable in groovy sccript
-                def summary = fileExists("${env.WORKSPACE}/summary.txt") ? readFile("${env.WORKSPACE}/summary.txt").trim() : "Summary not available"
-                //emailext --> email extension plugin must be installed in Jenkins and configured with SMTP server to work
                 emailext(
                     to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
                     cc: 'poongothai.ece@gmail.com',
                     subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
                     body: """Playwright test execution failed.
 
-                ${summary}
+${env.TEST_SUMMARY}
 
-                Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-                """,
+Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+""",
                     attachmentsPattern: "${env.ALLURE_REPORT}/**"
                 )
             }
