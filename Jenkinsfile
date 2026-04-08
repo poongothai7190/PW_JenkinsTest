@@ -96,63 +96,26 @@ pipeline {
     }
 
 
-     post {
+     
+    post {
         always {
-            // Archive Playwright JSON and Allure report
+            script {
+                // Read summary again inside post to ensure latest content
+                def summary = fileExists("${env.WORKSPACE}/summary.txt") ? 
+                              readFile("${env.WORKSPACE}/summary.txt").trim() : 
+                              "Summary not available"
+
+                emailext(
+                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
+                    subject: "Playwright Tests ${currentBuild.currentResult} - Build #${env.BUILD_NUMBER}",
+                    body: """<p>Playwright test execution is ${currentBuild.currentResult}.</p>
+                             <pre>${summary}</pre>
+                             <p>Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html</p>"""
+                )
+            }
+
+            // Archive artifacts
             archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
-            archiveArtifacts artifacts: "${env.PLAYWRIGHT_REPORT}", allowEmptyArchive: true
-        }
-
-        // Send email for success or unstable builds
-        success {
-            script {
-                emailext(
-                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
-                    cc: 'poongothai.ece@gmail.com',
-                    subject: "Playwright Tests Passed - Build #${env.BUILD_NUMBER}",
-                    body: """Playwright test execution passed.
-
-${env.TEST_SUMMARY}
-
-Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-""",
-                    attachmentsPattern: "${env.ALLURE_REPORT}/**"
-                )
-            }
-        }
-
-        unstable {
-            script {
-                emailext(
-                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
-                    cc: 'poongothai.ece@gmail.com',
-                    subject: "Playwright Tests Unstable - Build #${env.BUILD_NUMBER}",
-                    body: """Playwright test execution is UNSTABLE.
-
-${env.TEST_SUMMARY}
-
-Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-""",
-                    attachmentsPattern: "${env.ALLURE_REPORT}/**"
-                )
-            }
-        }
-
-        failure {
-            script {
-                emailext(
-                    to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com',
-                    cc: 'poongothai.ece@gmail.com',
-                    subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
-                    body: """Playwright test execution failed.
-
-${env.TEST_SUMMARY}
-
-Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
-""",
-                    attachmentsPattern: "${env.ALLURE_REPORT}/**"
-                )
-            }
         }
     }
 }
