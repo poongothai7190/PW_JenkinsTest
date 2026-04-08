@@ -2,9 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // NODE_ENV = 'test'
-        // REPORT_DIR = 'playwright-report'
-        // ALLURE_DIR = 'allure-report'
         NODE_ENV = 'test'
         PLAYWRIGHT_REPORT = 'playwright-report.json'
         ALLURE_RESULTS = 'allure-results'
@@ -34,18 +31,15 @@ pipeline {
             }
         }
 
-        stage('Run Playwright Tests') {
-            steps {
-                // Use allure-playwright reporter
+      stage('Run Playwright Tests') {
+        steps {
+            script {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 bat 'npx playwright test --reporter=allure-playwright,json'
+                }
             }
         }
-
-        // stage('Run Playwright Tests') {
-        //     steps {
-        //         bat 'npx playwright test --reporter=json'
-        //     }
-        // }
+    }
 
         // stage('Extract Test Counts') {
         //     steps {
@@ -72,17 +66,30 @@ pipeline {
         //     }
         // }
 
+        stage('Read Test Summary') {
+            steps {
+                script {
+                    def summaryFile = "${env.WORKSPACE}/summary.txt"
+                    if (!fileExists(summaryFile)) {
+                        error "summary.txt not found! Make sure globalTeardown ran."
+                    }
+                    env.TEST_SUMMARY = readFile(summaryFile).trim()
+                    echo "Test Summary:\n${env.TEST_SUMMARY}"
+                }
+            }
+        }
+
          stage('Generate Allure Report') {
             steps {
                 bat "npx allure generate ${env.ALLURE_RESULTS} --clean -o ${env.ALLURE_REPORT}"
                 archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
-                // Display in Jenkins UI via Allure plugin
-                allure([
-                    reportBuildPolicy: 'ALWAYS',
-                    results: [[path: "${env.ALLURE_RESULTS}"]]
-                ])
-            }
+
+            allure([
+                reportBuildPolicy: 'ALWAYS',
+                results: [[path: "${env.ALLURE_RESULTS}"]]
+            ])
         }
+    }
 
 //         stage('Send Email') {
 //             steps {
@@ -104,15 +111,61 @@ pipeline {
 //         }
     }
 
+//     stage('Send Email') {
+//     steps {
+//         mail bcc: '',
+//              body: """Playwright test execution finished.
+
+// ${env.TEST_SUMMARY}
+
+// Check Allure report: ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+// """,
+//              cc: 'testautomationmail2025@gmail.com',
+//              from: 'poongothai.ece@gmail.com',
+//              replyTo: 'testautomationmail2025@gmail.com',
+//              subject: "Playwright Test Report - Build #${env.BUILD_NUMBER}",
+//              to: 'testautomationmail2025@gmail.com,worksheets.kothai@gmail.com'
+//     }
+// }
+
+    // post {
+    //     always {
+    //         archiveArtifacts artifacts: "${env.ALLURE_DIR}/**", allowEmptyArchive: true
+    //         // archiveArtifacts artifacts: 'playwright-report.json', allowEmptyArchive: true
+    //     }
+    //     // failure {
+    //     //     mail to: 'team@company.com',
+    //     //          subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
+    //     //          body: "Check Jenkins build ${env.BUILD_URL} for details."
+    //     // }
+    // }
+
     post {
-        always {
-            archiveArtifacts artifacts: "${env.ALLURE_DIR}/**", allowEmptyArchive: true
-            // archiveArtifacts artifacts: 'playwright-report.json', allowEmptyArchive: true
-        }
-        // failure {
-        //     mail to: 'team@company.com',
-        //          subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
-        //          body: "Check Jenkins build ${env.BUILD_URL} for details."
-        // }
+    always {
+        // Archive Allure report
+        archiveArtifacts artifacts: "${env.ALLURE_REPORT}/**", allowEmptyArchive: true
+        // Archive Playwright JSON report
+        archiveArtifacts artifacts: "${env.PLAYWRIGHT_REPORT}", allowEmptyArchive: true
+    }
+
+    // success {
+    //     echo "Build succeeded! Allure report generated."
+    // }
+
+    // failure {
+    //     // Optional: send email on failure
+    //     mail bcc: '',
+    //          cc: 'manager1@company.com,manager2@company.com',
+    //          from: 'poongothai.ece@gmail.com',
+    //          replyTo: 'testautomationmail2025@gmail.com',
+    //          subject: "Playwright Tests Failed - Build #${env.BUILD_NUMBER}",
+    //          body: """Playwright test execution failed.
+
+    //         Check Jenkins build: ${env.BUILD_URL}
+
+    //         Check Allure report (if any): ${env.BUILD_URL}artifact/${env.ALLURE_REPORT}/index.html
+    //         """,
+    //          to: 'team1@company.com,team2@company.com'
+    //     }
     }
 }
